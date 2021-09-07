@@ -74,6 +74,7 @@ tests = testGroup "Marlowe"
     , testCase "State serializes into valid JSON" stateSerialization
     , testCase "Validator size is reasonable" validatorSize
     , testCase "Mul analysis" mulAnalysisTest
+    , testCase "Div analysis" divAnalysisTest
     , testCase "extractContractRoles" extractContractRolesTest
     , testProperty "Value equality is reflexive, symmetric, and transitive" checkEqValue
     , testProperty "Value double negation" doubleNegation
@@ -81,6 +82,7 @@ tests = testGroup "Marlowe"
     , testProperty "Values can be serialized to JSON" valueSerialization
     , testProperty "Scale Value multiplies by a constant rational" scaleMulTest
     , testProperty "Multiply by zero" mulTest
+    , testProperty "Divide zero and by zero" divTest
     , testProperty "Scale rounding" scaleRoundingTest
     , zeroCouponBondTest
     , errorHandlingTest
@@ -347,6 +349,14 @@ mulTest = property $ do
         eval (MulValue (Constant 0) a) === 0
 
 
+divTest :: Property
+divTest = property $ do
+    let eval = evalValue (Environment (Slot 10, Slot 1000)) (emptyState (Slot 10))
+    forAll valueGen $ \a ->
+        eval (DivValue (Constant 0) a) === 0 .&&.
+        eval (DivValue a (Constant 0)) === 0
+
+
 valueSerialization :: Property
 valueSerialization = property $
     forAll valueGen $ \a ->
@@ -363,6 +373,17 @@ mulAnalysisTest = do
     result <- warningsTrace contract
     --print result
     assertBool "Analysis ok" $ isRight result
+
+
+divAnalysisTest :: IO ()
+divAnalysisTest = do
+    let muliply = DivValue (Constant 11) (Constant 2)
+        alicePk = PK $ pubKeyHash $ walletPubKey alice
+        contract = If (muliply `ValueGE` Constant 5) Close (Pay alicePk (Party alicePk) ada (Constant (-100)) Close)
+    result <- warningsTrace contract
+    --print result
+    assertBool "Analysis ok" $ isRight result
+
 
 
 pangramContractSerialization :: IO ()
