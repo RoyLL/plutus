@@ -149,6 +149,12 @@ export const MulValue =
                  "times": coerceValue(rhs) };
     };
 
+export const DivValue =
+    function (lhs : EValue, rhs : EValue) : Value {
+        return { "divide": coerceValue(lhs),
+                 "by": coerceValue(rhs) };
+    };
+
 export const Scale =
     function (num : SomeNumber, den : SomeNumber, val : EValue) : Value {
         var cden = coerceNumber(den);
