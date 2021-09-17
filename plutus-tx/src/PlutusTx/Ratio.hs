@@ -4,7 +4,6 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE NoImplicitPrelude     #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# OPTIONS_GHC -fno-omit-interface-pragmas #-}
@@ -46,12 +45,11 @@ import qualified PlutusTx.Builtins as Builtins
 import           Data.Aeson        (FromJSON, ToJSON)
 import           GHC.Generics      (Generic)
 import qualified GHC.Real          as Ratio
-import           Prelude           (Bool (True), Eq, Integer, Integral, Ord (..), Show (..), otherwise, showParen,
-                                    showString, (*))
+import           Prelude           (Integer, Integral, Ord (..), Show (..), showParen, showString, (*))
 import qualified Prelude           as Haskell
 
 data Ratio a = a :% a
-    deriving stock (Eq,Generic)
+    deriving stock (Haskell.Eq,Generic)
     deriving anyclass (ToJSON, FromJSON)
 
 instance  Show a => Show (Ratio a) where
@@ -228,7 +226,7 @@ gcd :: Integer -> Integer -> Integer
 gcd a b = gcd' (abs a) (abs b) where
     gcd' a' b'
         | b' P.== P.zero = a'
-        | True           = gcd' b' (a' `Builtins.remainderInteger` b')
+        | P.True           = gcd' b' (a' `Builtins.remainderInteger` b')
 
 {-# INLINABLE truncate #-}
 -- | truncate @x@ returns the integer nearest @x@ between zero and @x@
@@ -282,7 +280,7 @@ half = 1 :% 2
 reduce :: Integer -> Integer -> Ratio Integer
 reduce x y
     | y P.== 0 = P.traceError "Pe" {-"Ratio has zero denominator"-}
-    | True     =
+    | P.True     =
         let d = gcd x y in
         (x `Builtins.quotientInteger` d) :% (y `Builtins.quotientInteger` d)
 
@@ -304,7 +302,7 @@ signum r =
          else P.negate P.one
 
 {-# INLINABLE even #-}
-even :: Integer -> Bool
+even :: Integer -> P.Bool
 even x = (x `Builtins.remainderInteger` 2) P.== P.zero
 
 {-# INLINABLE round #-}
@@ -315,7 +313,7 @@ round x
     | sig P.== P.negate P.one = n
     | sig P.== P.zero         = if even n then n else m
     | sig P.== P.one          = m
-    | otherwise               = P.traceError "Pf" {-"round default defn: Bad value"-}
+    | P.otherwise               = P.traceError "Pf" {-"round default defn: Bad value"-}
     where (n, r) = properFraction x
           m      = if r P.< P.zero then n P.- P.one else n P.+ P.one
           sig    = signumR (abs r P.- half)
